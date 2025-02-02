@@ -51,7 +51,8 @@ fun Application.module() {
 
     install(CORS) {
         allowCredentials = true
-        allowHost("localhost:5173", listOf("http", "https"))
+        allowHost("localhost:5173",  listOf("http", "https"))
+        allowHost("cscbackalley.club",  listOf("http", "https"))
         anyMethod()
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.AccessControlAllowCredentials)

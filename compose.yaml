@@ -1,15 +1,30 @@
 services:
+  app:
+    environment:
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT}
+    build: .
+    ports:
+      - "9999:${SERVER_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     image: postgres:16
     container_name: postgres_db_csc
     volumes:
-      - postgres_data_csc:/var/lib/postgresql/data
+      - /mnt/volume_tor1_01/postgresql_data_csc:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5432:5432"
-
-volumes:
-  postgres_data_csc:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${DB_NAME} -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
