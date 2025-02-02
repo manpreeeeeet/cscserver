@@ -34,6 +34,7 @@ dependencies {
     implementation("io.ktor:ktor-server-sessions")
     implementation("io.ktor:ktor-client-core")
     implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-server-cors")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("io.ktor:ktor-client-content-negotiation")
     implementation("io.ktor:ktor-server-content-negotiation")
@@ -46,6 +47,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 
     implementation("at.favre.lib:bcrypt:0.10.2")
 

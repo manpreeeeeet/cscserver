@@ -1,18 +1,19 @@
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import posts.AuthorsTable
-import posts.PostsTable
 import javax.sql.DataSource
 
 
@@ -21,7 +22,7 @@ var passwordPepper = requireNotNull(System.getenv("PASSWORD_PEPPER"))
 
 object DB {
 
-    var db: DataSource = connect();
+    val db: DataSource  by lazy { connect() }
 
     fun connect(): DataSource {
         val config = HikariConfig()
@@ -37,8 +38,9 @@ object DB {
 
 
 fun main() {
-    transaction(Database.connect(DB.db)) {
-        SchemaUtils.create(PostsTable, AuthorsTable)
+    Database.connect(DB.db)
+    transaction {
+        SchemaUtils.create(RoomTable, PostsTable, ReplyTable, AuthorsTable, SessionTable, InviteTable)
     }
 
     embeddedServer(Netty, port = serverPort, host = "0.0.0.0", module = Application::module)
@@ -46,10 +48,27 @@ fun main() {
 }
 
 fun Application.module() {
+
+    install(CORS) {
+        allowCredentials = true
+        allowHost("localhost:5173", listOf("http", "https"))
+        anyMethod()
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.AccessControlAllowCredentials)
+        allowHeader(HttpHeaders.Authorization)
+        exposeHeader(HttpHeaders.SetCookie)
+    }
+
     install(Sessions) {
+        cookie<AuthSession>("auth_session", DBSession) {
+            cookie.path = "/"
+            cookie.maxAgeInSeconds = 3600
+            cookie.sameSite = "none"
+            cookie.secure = true
+        }
     }
     install(ContentNegotiation) {
-        json()
+        json(Json { ignoreUnknownKeys = true })
     }
 
     routing {
@@ -57,5 +76,7 @@ fun Application.module() {
             call.respondText("Hello, world!")
         }
     }
+    routeAuthors()
+    routePosts()
 
 }
