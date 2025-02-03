@@ -5,8 +5,10 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -15,6 +17,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.seconds
 
 
 val serverPort = System.getenv("SERVER_PORT")?.toInt() ?: 8080
@@ -22,7 +25,7 @@ var passwordPepper = requireNotNull(System.getenv("PASSWORD_PEPPER"))
 
 object DB {
 
-    val db: DataSource  by lazy { connect() }
+    val db: DataSource by lazy { connect() }
 
     fun connect(): DataSource {
         val config = HikariConfig()
@@ -51,13 +54,22 @@ fun Application.module() {
 
     install(CORS) {
         allowCredentials = true
-        allowHost("localhost:5173",  listOf("http", "https"))
-        allowHost("cscbackalley.club",  listOf("http", "https"))
+        allowHost("localhost:5173", listOf("http", "https"))
+        allowHost("cscbackalley.club", listOf("http", "https"))
         anyMethod()
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.AccessControlAllowCredentials)
         allowHeader(HttpHeaders.Authorization)
         exposeHeader(HttpHeaders.SetCookie)
+    }
+
+    install(RateLimit) {
+        register(RateLimitName("post_limit")) {
+            rateLimiter(limit = 15, refillPeriod = 60.seconds)
+            requestKey { call ->
+                call.request.origin.remoteAddress
+            }
+        }
     }
 
     install(Sessions) {

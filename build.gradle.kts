@@ -38,6 +38,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("io.ktor:ktor-client-content-negotiation")
     implementation("io.ktor:ktor-server-content-negotiation")
+    implementation("io.ktor:ktor-server-rate-limit")
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
 

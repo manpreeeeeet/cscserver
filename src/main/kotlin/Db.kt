@@ -146,5 +146,5 @@ fun PostEntity.toPostDto(): PostDto {
 }
 
 fun LocalDateTime.toIsoString(): String {
-    return this.format(DateTimeFormatter.ISO_DATE_TIME)
+    return this.format(DateTimeFormatter.ISO_DATE_TIME) + "Z"
 }
