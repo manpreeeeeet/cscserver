@@ -2,6 +2,7 @@
 import at.favre.lib.crypto.bcrypt.BCrypt
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -69,34 +70,36 @@ fun Application.routeAuthors() {
                 call.respond(Response(msg = "ok"))
             }
 
-            post("/login") {
-                val request = call.receive<LoginRequest>()
+            rateLimit(RateLimitName("login_limit")) {
+                post("/login") {
+                    val request = call.receive<LoginRequest>()
 
-                val author = transaction {
-                    AuthorEntity.find(AuthorsTable.name eq request.name).firstOrNull()
-                }
-                if (author == null) {
-                    call.respond("author not found")
-                    return@post
-                }
+                    val author = transaction {
+                        AuthorEntity.find(AuthorsTable.name eq request.name).firstOrNull()
+                    }
+                    if (author == null) {
+                        call.respond("author not found")
+                        return@post
+                    }
 
-                if (!verifyPassword(request.password, author.password)) {
-                    call.respond("wrong password")
-                    return@post
-                }
-                val existingSession = call.sessions.get<AuthSession>()
-                if (existingSession != null) {
-                    call.respond(Response(msg = "ok"))
-                    return@post
-                }
+                    if (!verifyPassword(request.password, author.password)) {
+                        call.respond("wrong password")
+                        return@post
+                    }
+                    val existingSession = call.sessions.get<AuthSession>()
+                    if (existingSession != null) {
+                        call.respond(Response(msg = "ok"))
+                        return@post
+                    }
 
-                call.sessions.set(
-                    AuthSession(
-                        userId = author.id.value,
-                        expires = System.currentTimeMillis() + 3600 * 1000 * 24
+                    call.sessions.set(
+                        AuthSession(
+                            userId = author.id.value,
+                            expires = System.currentTimeMillis() + 3600 * 1000 * 24
+                        )
                     )
-                )
-                call.respond(Response(msg = "ok"))
+                    call.respond(Response(msg = "ok"))
+                }
             }
         }
     }

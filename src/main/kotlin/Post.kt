@@ -17,19 +17,33 @@ data class PostsResponse(val posts: List<PostDto>)
 @Serializable
 data class PostRequest(val text: String, val url: String? = null)
 
+@Serializable
+data class LatestPosts(val posts: List<PostDto>, val replies: List<ReplyDto>)
+
 fun Application.routePosts() {
     routing {
 
         route("/posts/latest/") {
             get {
-                val latestPost = transaction {
-                    PostEntity.all()
+                val latestPosts = transaction {
+                    val posts = PostEntity.all()
                         .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                        .limit(1)
-                        .first()
-                        .toPostDto()
+                        .limit(2)
+                        .map {
+                            it.toPostNoRepliesDto()
+                        }
+
+                    val replies = ReplyEntity.all()
+                        .orderBy(ReplyTable.createdAt to SortOrder.DESC)
+                        .limit(3)
+                        .map {
+                            it.toReplyDto()
+                        }
+
+                    LatestPosts(posts, replies)
                 }
-                call.respond(latestPost)
+
+                call.respond(latestPosts)
             }
         }
 

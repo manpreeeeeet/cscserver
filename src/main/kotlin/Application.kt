@@ -17,6 +17,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -70,6 +71,12 @@ fun Application.module() {
     install(RateLimit) {
         register(RateLimitName("post_limit")) {
             rateLimiter(limit = 15, refillPeriod = 60.seconds)
+            requestKey { call ->
+                call.request.origin.remoteAddress
+            }
+        }
+        register(RateLimitName("login_limit")) {
+            rateLimiter(limit = 100, refillPeriod = 1.hours)
             requestKey { call ->
                 call.request.origin.remoteAddress
             }

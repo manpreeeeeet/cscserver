@@ -1,4 +1,3 @@
-
 import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.IntEntity
@@ -29,6 +28,7 @@ object ImageTable : IntIdTable("image") {
 
 class ImageEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<ImageEntity>(ImageTable)
+
     var url by ImageTable.url
     var size by ImageTable.size
     var createdAt by ImageTable.createdAt
@@ -55,6 +55,7 @@ object ReplyTable : IntIdTable("replies") {
 
 class InviteEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<InviteEntity>(InviteTable)
+
     var code by InviteTable.code
 }
 
@@ -135,7 +136,7 @@ object DBSession : SessionStorage {
             if (sessionEntity == null) {
                 SessionEntity.new {
                     sessionId = id
-                    value  = sessionValue
+                    value = sessionValue
                 }
                 return@transaction
             }
@@ -151,16 +152,74 @@ object DBSession : SessionStorage {
 data class AuthorDto(val name: String)
 
 @Serializable
-data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val room: String, val imageUrl: String?, val replies: List<ReplyDto>)
+data class PostDto(
+    val id: Int,
+    val author: AuthorDto,
+    val text: String,
+    val createdAt: String,
+    val room: String,
+    val imageUrl: String?,
+    val replies: List<ReplyDto>
+)
+
 
 @Serializable
-data class ReplyDto(val id: Int, val author: AuthorDto, val createdAt: String, val text: String, val imageUrl: String?)
+data class ReplyDto(
+    val id: Int,
+    val author: AuthorDto,
+    val createdAt: String,
+    val text: String,
+    val imageUrl: String?,
+    val parent: ParentData? = null
+) {
+    @Serializable
+    data class ParentData(val id: Int, val room: String)
+}
 
 fun AuthorEntity.toAuthorDto() = AuthorDto(name = this.name)
 
+fun ReplyEntity.toReplyDto() = ReplyDto(
+    this.id.value,
+    this.author.toAuthorDto(),
+    this.createdAt.toIsoString(),
+    this.text,
+    this.imageUrl,
+    ReplyDto.ParentData(this.post.id.value, this.post.room.name)
+)
+
 fun PostEntity.toPostDto(): PostDto {
-    val replies = this.replies.sortedBy{ it.createdAt }.map { ReplyDto(it.id.value, it.author.toAuthorDto(),it.createdAt.toIsoString(), it.text, it.imageUrl) }
-    val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(),this.room.name,this.imageUrl,  replies)
+    val replies = this.replies.sortedBy { it.createdAt }.map {
+        ReplyDto(
+            it.id.value,
+            it.author.toAuthorDto(),
+            it.createdAt.toIsoString(),
+            it.text,
+            it.imageUrl
+        )
+    }
+    val post = PostDto(
+        this.id.value,
+        this.author.toAuthorDto(),
+        this.text,
+        this.createdAt.toIsoString(),
+        this.room.name,
+        this.imageUrl,
+        replies
+    )
+    return post
+}
+
+fun PostEntity.toPostNoRepliesDto(): PostDto {
+
+    val post = PostDto(
+        this.id.value,
+        this.author.toAuthorDto(),
+        this.text,
+        this.createdAt.toIsoString(),
+        this.room.name,
+        this.imageUrl,
+        listOf()
+    )
     return post
 }
 
