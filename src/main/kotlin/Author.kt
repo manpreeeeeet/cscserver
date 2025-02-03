@@ -62,7 +62,7 @@ fun Application.routeAuthors() {
                 call.sessions.set(
                     AuthSession(
                         userId = author.id.value,
-                        expires = System.currentTimeMillis() + 3600 * 1000
+                        expires = System.currentTimeMillis() + 3600 * 1000 * 24
                     )
                 )
 
@@ -93,7 +93,7 @@ fun Application.routeAuthors() {
                 call.sessions.set(
                     AuthSession(
                         userId = author.id.value,
-                        expires = System.currentTimeMillis() + 3600 * 1000
+                        expires = System.currentTimeMillis() + 3600 * 1000 * 24
                     )
                 )
                 call.respond(Response(msg = "ok"))

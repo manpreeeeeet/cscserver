@@ -79,7 +79,7 @@ fun Application.module() {
     install(Sessions) {
         cookie<AuthSession>("auth_session", DBSession) {
             cookie.path = "/"
-            cookie.maxAgeInSeconds = 3600
+            cookie.maxAgeInSeconds = 3600 * 24
             cookie.sameSite = "none"
             cookie.secure = true
         }
