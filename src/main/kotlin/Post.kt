@@ -19,6 +19,20 @@ data class PostRequest(val text: String)
 
 fun Application.routePosts() {
     routing {
+
+        route("/posts/latest/") {
+            get {
+                val latestPost = transaction {
+                    PostEntity.all()
+                        .orderBy(PostsTable.createdAt to SortOrder.DESC)
+                        .limit(1)
+                        .first()
+                        .toPostDto()
+                }
+                call.respond(latestPost)
+            }
+        }
+
         route("/posts/{room}/") {
             get {
                 val room = call.parameters["room"]!!

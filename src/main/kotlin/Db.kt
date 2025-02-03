@@ -132,7 +132,7 @@ object DBSession : SessionStorage {
 data class AuthorDto(val name: String)
 
 @Serializable
-data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val replies: List<ReplyDto>)
+data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val room: String, val replies: List<ReplyDto>)
 
 @Serializable
 data class ReplyDto(val id: Int, val author: AuthorDto, val createdAt: String, val text: String)
@@ -141,7 +141,7 @@ fun AuthorEntity.toAuthorDto() = AuthorDto(name = this.name)
 
 fun PostEntity.toPostDto(): PostDto {
     val replies = this.replies.sortedBy{ it.createdAt }.map { ReplyDto(it.id.value, it.author.toAuthorDto(),it.createdAt.toIsoString(), it.text) }
-    val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(), replies)
+    val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(),this.room.name,  replies)
     return post
 }
 
