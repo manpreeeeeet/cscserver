@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 data class PostsResponse(val posts: List<PostDto>)
 
 @Serializable
-data class PostRequest(val text: String)
+data class PostRequest(val text: String, val url: String? = null)
 
 fun Application.routePosts() {
     routing {
@@ -138,6 +138,7 @@ fun Application.routePosts() {
                             author = authorEntity
                             room = roomEntity
                             createdAt = LocalDateTime.now()
+                            imageUrl = post.url
                         }
                     }
                     if (postEntity != null) {

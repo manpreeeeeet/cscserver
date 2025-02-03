@@ -22,6 +22,9 @@ import kotlin.time.Duration.Companion.seconds
 
 val serverPort = System.getenv("SERVER_PORT")?.toInt() ?: 8080
 var passwordPepper = requireNotNull(System.getenv("PASSWORD_PEPPER"))
+val s3Url = requireNotNull(System.getenv("S3_ENDPOINT"))
+val s3AccessId = requireNotNull(System.getenv("AWS_ACCESS_KEY_ID"))
+val s3SecretAccessKey = requireNotNull(System.getenv("AWS_SECRET_ACCESS_KEY"))
 
 object DB {
 
@@ -43,7 +46,8 @@ object DB {
 fun main() {
     Database.connect(DB.db)
     transaction {
-        SchemaUtils.create(RoomTable, PostsTable, ReplyTable, AuthorsTable, SessionTable, InviteTable)
+        SchemaUtils.create(RoomTable, PostsTable, ReplyTable, AuthorsTable, SessionTable, InviteTable, ImageTable)
+        SchemaUtils.createMissingTablesAndColumns(PostsTable, ReplyTable, ImageTable)
     }
 
     embeddedServer(Netty, port = serverPort, host = "0.0.0.0", module = Application::module)
@@ -91,5 +95,5 @@ fun Application.module() {
     }
     routeAuthors()
     routePosts()
-
+    routeImage()
 }

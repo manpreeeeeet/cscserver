@@ -50,6 +50,12 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 
+//    implementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
+    implementation("software.amazon.awssdk:s3:2.30.10")
+
+
+
+
     implementation("at.favre.lib:bcrypt:0.10.2")
 
 

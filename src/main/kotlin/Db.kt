@@ -20,9 +20,25 @@ object InviteTable : IntIdTable("invite") {
     val code = varchar("code", 100).uniqueIndex()
 }
 
+object ImageTable : IntIdTable("image") {
+    val url = text("url")
+    val size = long("size")
+    val createdAt = datetime("created_at")
+    val author = reference("author_id", AuthorsTable)
+}
+
+class ImageEntity(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<ImageEntity>(ImageTable)
+    var url by ImageTable.url
+    var size by ImageTable.size
+    var createdAt by ImageTable.createdAt
+    var author by AuthorEntity referencedOn ImageTable.author
+}
+
 object PostsTable : IntIdTable("posts") {
     private const val MAX_VARCHAR_LENGTH = 200
     val text = varchar("text", MAX_VARCHAR_LENGTH)
+    val imageUrl = text("url").nullable()
     val author = reference("author_id", AuthorsTable)
     val room = reference("room_id", RoomTable)
     val createdAt = datetime("created_at")
@@ -31,6 +47,7 @@ object PostsTable : IntIdTable("posts") {
 object ReplyTable : IntIdTable("replies") {
     private const val MAX_VARCHAR_LENGTH = 200
     val text = varchar("text", MAX_VARCHAR_LENGTH)
+    val imageUrl = text("url").nullable()
     val author = reference("author_id", AuthorsTable)
     val post = reference("post_id", PostsTable)
     val createdAt = datetime("created_at")
@@ -63,6 +80,7 @@ class PostEntity(id: EntityID<Int>) : IntEntity(id) {
     var text by PostsTable.text
     var author by AuthorEntity referencedOn PostsTable.author
     var room: RoomEntity by RoomEntity referencedOn PostsTable.room
+    var imageUrl by PostsTable.imageUrl
     val replies by ReplyEntity referrersOn ReplyTable.post
     var createdAt by PostsTable.createdAt
 }
@@ -132,7 +150,7 @@ object DBSession : SessionStorage {
 data class AuthorDto(val name: String)
 
 @Serializable
-data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val room: String, val replies: List<ReplyDto>)
+data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val room: String, val imageUrl: String?, val replies: List<ReplyDto>)
 
 @Serializable
 data class ReplyDto(val id: Int, val author: AuthorDto, val createdAt: String, val text: String)
@@ -141,7 +159,7 @@ fun AuthorEntity.toAuthorDto() = AuthorDto(name = this.name)
 
 fun PostEntity.toPostDto(): PostDto {
     val replies = this.replies.sortedBy{ it.createdAt }.map { ReplyDto(it.id.value, it.author.toAuthorDto(),it.createdAt.toIsoString(), it.text) }
-    val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(),this.room.name,  replies)
+    val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(),this.room.name,this.imageUrl,  replies)
     return post
 }
 
