@@ -15,6 +15,9 @@ import java.time.LocalDateTime
 data class PostsResponse(val posts: List<PostDto>)
 
 @Serializable
+data class PostsPaginatedResponse(val posts: List<PostDto>, val cursor: Int?)
+
+@Serializable
 data class PostRequest(val text: String, val url: String? = null)
 
 @Serializable
@@ -49,16 +52,21 @@ fun Application.routePosts() {
 
         route("/posts/{room}/") {
             get {
+                val cursor = call.request.queryParameters["cursor"]?.toIntOrNull() ?: 0
                 val room = call.parameters["room"]!!
+                val postsPerPage = 10
                 val posts: List<PostDto> = transaction {
                     val posts =
-                        RoomEntity.find { RoomTable.name eq room }.first().posts.sortedByDescending { it.createdAt }
+                        RoomEntity.find { RoomTable.name eq room }.first().posts
+                            .orderBy(PostsTable.createdAt to SortOrder.DESC)
+                            .limit(postsPerPage)
+                            .offset((postsPerPage * cursor).toLong())
                             .map {
                                 it.toPostDto()
                             }
                     posts
                 }
-                call.respond(posts)
+                call.respond(PostsPaginatedResponse(posts, if (posts.size == postsPerPage) cursor + 1 else null))
             }
 
             route("{id}/") {
