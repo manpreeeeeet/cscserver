@@ -90,6 +90,7 @@ class ReplyEntity(id: EntityID<Int>) : IntEntity(id) {
 
     var text by ReplyTable.text
     var author by AuthorEntity referencedOn ReplyTable.author
+    var imageUrl by ReplyTable.imageUrl
     var post by PostEntity referencedOn ReplyTable.post
     var createdAt by ReplyTable.createdAt
 }
@@ -153,12 +154,12 @@ data class AuthorDto(val name: String)
 data class PostDto(val id: Int, val author: AuthorDto, val text: String, val createdAt: String, val room: String, val imageUrl: String?, val replies: List<ReplyDto>)
 
 @Serializable
-data class ReplyDto(val id: Int, val author: AuthorDto, val createdAt: String, val text: String)
+data class ReplyDto(val id: Int, val author: AuthorDto, val createdAt: String, val text: String, val imageUrl: String?)
 
 fun AuthorEntity.toAuthorDto() = AuthorDto(name = this.name)
 
 fun PostEntity.toPostDto(): PostDto {
-    val replies = this.replies.sortedBy{ it.createdAt }.map { ReplyDto(it.id.value, it.author.toAuthorDto(),it.createdAt.toIsoString(), it.text) }
+    val replies = this.replies.sortedBy{ it.createdAt }.map { ReplyDto(it.id.value, it.author.toAuthorDto(),it.createdAt.toIsoString(), it.text, it.imageUrl) }
     val post = PostDto(this.id.value, this.author.toAuthorDto(), this.text, this.createdAt.toIsoString(),this.room.name,this.imageUrl,  replies)
     return post
 }

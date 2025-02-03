@@ -93,6 +93,7 @@ fun Application.routePosts() {
                                 author = authorEntity
                                 post = postEntity
                                 createdAt = LocalDateTime.now()
+                                imageUrl = postRequest.url
                             }
 
                         }

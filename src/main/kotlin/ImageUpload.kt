@@ -71,7 +71,7 @@ fun Application.routeImage() {
                 val objectKey = UUID.randomUUID().toString()
                 val canUpload = transaction {
                     val imageCount = ImageEntity.count(ImageTable.author eq authSession.userId)
-                    if (imageCount >= 20) {
+                    if (imageCount >= 100) {
                         return@transaction false
                     }
                     return@transaction true
