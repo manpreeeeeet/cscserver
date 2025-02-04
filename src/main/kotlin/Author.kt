@@ -9,6 +9,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @Serializable
@@ -31,6 +32,39 @@ fun Application.routeAuthors() {
     routing {
         route("/author") {
 
+            rateLimit(RateLimitName("login_limit")) {
+                get("/invite") {
+                    val codeProvided = call.request.queryParameters["code"] ?: return@get
+
+                    val existingSession = call.sessions.get<AuthSession>()
+                    if (existingSession == null || existingSession.expires < System.currentTimeMillis()) {
+                        call.respond(HttpStatusCode.Forbidden, "Session timed out")
+                        return@get
+                    }
+
+                    var errorMessage = ""
+                    val inviteEntity = transaction {
+                        val authorEntity = AuthorEntity.find { AuthorsTable.id eq existingSession.userId }.first()
+                        val inviteLimit = InviteLimitEntity.find { InviteLimitTable.author eq existingSession.userId }.first()
+                        if (inviteLimit.limit <= 0 ) {
+                            errorMessage = "out of invites"
+                            return@transaction null
+                        }
+                        inviteLimit.limit -= 1
+                        InviteEntity.new {
+                            code = codeProvided
+                            author = authorEntity
+                        }
+                    }
+                    if (inviteEntity == null) {
+                        call.respond(mapOf("message" to errorMessage))
+                        return@get
+                    }
+                    call.respond(mapOf("message" to "success"))
+
+                }
+            }
+
             get("/status") {
                 val existingSession = call.sessions.get<AuthSession>()
                 if (existingSession == null || existingSession.expires < System.currentTimeMillis()) {
@@ -48,12 +82,15 @@ fun Application.routeAuthors() {
 
                 val author = transaction {
                     val invite =
-                        InviteEntity.find { InviteTable.code eq request.code }.firstOrNull() ?: return@transaction null
-                    invite.delete()
-                    AuthorEntity.new {
+                        InviteEntity.find { (InviteTable.code eq request.code) and (InviteTable.usedBy eq null) }.firstOrNull() ?: return@transaction null
+
+                    val authorEntity = AuthorEntity.new {
                         name = request.name
                         password = hashPassword(request.password)
                     }
+
+                    invite.usedBy = authorEntity
+                    authorEntity
                 }
                 if (author == null) {
                     call.respond(HttpStatusCode.Forbidden, "failed")

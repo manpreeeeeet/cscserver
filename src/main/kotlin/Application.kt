@@ -47,8 +47,8 @@ object DB {
 fun main() {
     Database.connect(DB.db)
     transaction {
-        SchemaUtils.create(RoomTable, PostsTable, ReplyTable, AuthorsTable, SessionTable, InviteTable, ImageTable)
-        SchemaUtils.createMissingTablesAndColumns(PostsTable, ReplyTable, ImageTable)
+        SchemaUtils.create(RoomTable, PostsTable, ReplyTable, AuthorsTable, SessionTable, InviteTable, ImageTable, InviteLimitTable)
+        SchemaUtils.createMissingTablesAndColumns(PostsTable, ReplyTable, ImageTable, InviteTable, InviteLimitTable)
     }
 
     embeddedServer(Netty, port = serverPort, host = "0.0.0.0", module = Application::module)

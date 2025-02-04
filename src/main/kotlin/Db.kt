@@ -17,7 +17,23 @@ object RoomTable : IntIdTable("rooms") {
 
 object InviteTable : IntIdTable("invite") {
     val code = varchar("code", 100).uniqueIndex()
+    val author = reference("author_id", AuthorsTable)
+    val usedBy = reference("author_id_used", AuthorsTable).nullable()
 }
+
+object InviteLimitTable : IntIdTable("invite_limits") {
+    val author = reference("author_id", AuthorsTable)
+    val limit = long("limit")
+}
+
+class InviteLimitEntity(id: EntityID<Int>): IntEntity(id) {
+    companion object : IntEntityClass<InviteLimitEntity>(InviteLimitTable)
+
+    var author by AuthorEntity referencedOn InviteLimitTable.author
+    var limit by InviteLimitTable.limit
+
+}
+
 
 object ImageTable : IntIdTable("image") {
     val url = text("url")
@@ -57,6 +73,8 @@ class InviteEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<InviteEntity>(InviteTable)
 
     var code by InviteTable.code
+    var author  by AuthorEntity referencedOn InviteTable.author
+    var usedBy by AuthorEntity optionalReferencedOn  InviteTable.usedBy
 }
 
 class RoomEntity(id: EntityID<Int>) : IntEntity(id) {
